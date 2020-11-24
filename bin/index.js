@@ -1,7 +1,7 @@
 const util = require('util');
 const yargs = require("yargs");
 const request = require('sync-request');
-const {TypeGenerator, DB2TypesToTypescript} = require('../includes/TypeGenerator');
+const {TypeGenerator, DB2TypesToTypescript} = require(__dirname + '/../includes/TypeGenerator');
 const fs = require('fs');
 
 const options = yargs
@@ -134,7 +134,7 @@ for (let item of paths) {
 }
 
 try {
-    var data = fs.readFileSync("./templates/baseCommunication.service.template.ts", 'utf8');
+    var data = fs.readFileSync(__dirname + "/../templates/baseCommunication.service.template.ts", 'utf8');
     fs.writeFileSync(options.output + "/communication.interface.ts", interfaceText);
 
     data = data.replace("[[ENDPOINTS]]", communicationServiceText);
