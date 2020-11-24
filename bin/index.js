@@ -8,17 +8,27 @@ const options = yargs
  .usage("Usage: -j <json>")
  .option("j", { alias: "json", describe: "OpenAPI.json Datei", type: "path", demandOption: false })
  .option("u", { alias: "url", describe: "URL zum Abruf der OpenAPI.json", type: "url", demandOption: false })
- .option("o", { alias: "output", describe: "Ausgabeordner", type: "path", demandOption: true })
+ .option("o", { alias: "output", describe: "Ausgabeordner", type: "path", demandOption: false })
+ .option("c", { alias: "config", describe: "Config", type: "path", demandOption: false })
  .argv;
 
+ let config = {
+    "output": options.output,
+    "json": options.json,
+    "url": options.url
+}
+
+if (options.config !== undefined) {
+    config = JSON.parse(fs.readFileSync(options.config))["openapi-to-interface"];
+}
 
 let OpenAPI = "";
 
-if (options.json !== undefined) {
-    OpenAPI = require(options.json);
+if (config.json !== undefined) {
+    OpenAPI = JSON.parse(fs.readFileSync(config.json));
 }
-else if (options.url !== undefined) {
-    var res = request("GET", options.url);
+else if (config.url !== undefined) {
+    var res = request("GET", config.url);
     OpenAPI = JSON.parse(res.getBody('utf8'));
 }
 
@@ -135,12 +145,12 @@ for (let item of paths) {
 
 try {
     var data = fs.readFileSync(__dirname + "/../templates/baseCommunication.service.template.ts", 'utf8');
-    fs.writeFileSync(options.output + "/communication.interface.ts", interfaceText);
+    fs.writeFileSync(config.output + "/communication.interface.ts", interfaceText);
 
     data = data.replace("[[ENDPOINTS]]", communicationServiceText);
     data = data.replace("[[IMPORTS]]", "import {\n" + communicationImportText + `\n} from "./communication.interface";`);
 
-    fs.writeFileSync(options.output + "/baseCommunication.service.ts", data);
+    fs.writeFileSync(config.output + "/baseCommunication.service.ts", data);
 } catch(e) {
     console.log('Error:', e.stack);
 }
