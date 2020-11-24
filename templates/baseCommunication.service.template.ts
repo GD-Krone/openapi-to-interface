@@ -5,16 +5,10 @@ declare var command: any;
 export class BaseCommunicationService 
 {
   //Wrapper um Function mit Callbacks als Promise verwenden zu können
-  private async apiCommand<Response> (apiCommand: any): Promise<Response>
+  private async apiCommand<Response> (verb: "POST" | "GET", command: string, payload: object): Promise<Response>
   {
-    const payload = JSON.stringify({ 
-      "verb": apiCommand.method,
-      "command": apiCommand.endpoint,
-      "json": JSON.stringify(apiCommand.payload || {})
-    });
-
     return new Promise(function(resolve, reject) {
-      command('open_api', payload, resolve, reject);
+      command('open_api', JSON.stringify({verb, command, "json": JSON.stringify(payload)}), resolve, reject);
     });
   }
   [[ENDPOINTS]]

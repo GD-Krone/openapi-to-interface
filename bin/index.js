@@ -8,12 +8,14 @@ const options = yargs
  .usage("Usage: -j <json>")
  .option("j", { alias: "json", describe: "OpenAPI.json Datei", type: "path", demandOption: false })
  .option("u", { alias: "url", describe: "URL zum Abruf der OpenAPI.json", type: "url", demandOption: false })
+ .option("t", { alias: "templates", describe: "Template-Ordner", type: "path", demandOption: false })
  .option("o", { alias: "output", describe: "Ausgabeordner", type: "path", demandOption: false })
  .option("c", { alias: "config", describe: "Config", type: "path", demandOption: false })
  .argv;
 
  let config = {
     "output": options.output,
+    "templates": options.templates || __dirname + "/../templates",
     "json": options.json,
     "url": options.url
 }
@@ -131,11 +133,7 @@ for (let item of paths) {
    /** ${item.desc} */
    public ${item.method}$${id} (parameter: $${id}.Parameter${item.properties.requestBody.length ? `, request: $${id}.Request` : ""}): Promise<${item.properties.responses !== undefined ? `$${id}.Response` : "void"}>
    {
-      return this.apiCommand({
-        method: "${item.method.toUpperCase()}",
-        endpoint: $${id}.Url(parameter),
-        payload: ${item.properties.requestBody.length ? "request" : "{}"}
-      });
+      return this.apiCommand("${item.method.toUpperCase()}", $${id}.Url(parameter), ${item.properties.requestBody.length ? "request" : "{}"});
    }
     `;
 
