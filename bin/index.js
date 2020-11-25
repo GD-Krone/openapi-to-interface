@@ -140,7 +140,7 @@ for (let item of paths) {
 
     communicationServiceText += `
    /** ${item.desc} */
-   public ${item.method}${id} (${item.properties.requestPath.length ? `parameter: ${id}.Parameter` : ""}${item.properties.requestPath.length && item.properties.requestBody.length ? ", " : ""}${item.properties.requestBody.length ? `request: ${id}.Request` : ""}): Promise<${item.properties.responses !== undefined ? `$${id}.Response` : "void"}>
+   public ${id} (${item.properties.requestPath.length ? `parameter: ${id}.Parameter` : ""}${item.properties.requestPath.length && item.properties.requestBody.length ? ", " : ""}${item.properties.requestBody.length ? `request: ${id}.Request` : ""}): Promise<${item.properties.responses !== undefined ? `$${id}.Response` : "void"}>
    {
       return this.apiCommand("${item.method.toUpperCase()}", ${id}.Url(${item.properties.requestPath.length ? "parameter" : ""}), ${item.properties.requestBody.length ? "request" : "{}"});
    }
