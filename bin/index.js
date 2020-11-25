@@ -1,8 +1,9 @@
-const util = require('util');
+const util = require("util");
 const yargs = require("yargs");
-const request = require('sync-request');
-const {TypeGenerator, DB2TypesToTypescript} = require(__dirname + '/../includes/TypeGenerator');
-const fs = require('fs');
+const request = require("sync-request");
+const camelCase = require("camelcase");
+const {TypeGenerator, DB2TypesToTypescript} = require(__dirname + "/../includes/TypeGenerator");
+const fs = require("fs");
 
 const options = yargs
  .usage("Usage: -j <json>")
@@ -31,7 +32,7 @@ if (config.json !== undefined) {
 }
 else if (config.url !== undefined) {
     var res = request("GET", config.url);
-    OpenAPI = JSON.parse(res.getBody('utf8'));
+    OpenAPI = JSON.parse(res.getBody("utf8"));
 }
 
 let paths = [];
@@ -61,7 +62,7 @@ function MakePath (path, getPost, method)
         }
 
         if (getPost.requestBody !== undefined) {
-            for (let [name, parameter] of Object.entries(getPost.requestBody.content['application/json'].schema.properties)) {
+            for (let [name, parameter] of Object.entries(getPost.requestBody.content["application/json"].schema.properties)) {
                 let type = parameter.type;
                 if (type == "integer" || type == "long long") type = "number";
 
@@ -70,7 +71,7 @@ function MakePath (path, getPost, method)
         }
 
         if (getPost.responses !== undefined && getPost.responses["200"] !== undefined) {
-            let typeGenerator = new TypeGenerator("Response", getPost.responses["200"].content['application/json'].schema);
+            let typeGenerator = new TypeGenerator("Response", getPost.responses["200"].content["application/json"].schema);
             if (typeGenerator.Valid()) endpoint.responses = typeGenerator;
             endpoint.desc = getPost.responses["200"].description;
         }
@@ -90,14 +91,22 @@ for (let [path, definition] of Object.entries(OpenAPI.paths)) {
 
 let interfaceText = "";
 
+function GenerateID (method, path, uuid)
+{
+    const splitPath = path.split(/\/{(.+)/);
+    return method + camelCase(splitPath[0].replace(/\//g, "-"), {pascalCase: true}) + "$" + splitPath[1].replace(/}\/{/g, "$").slice(0, -1);
+}
+
 for (let item of paths) {
+    const id = GenerateID(item.method, item.path, item.uuid); 
+
     interfaceText += `/** ${item.desc} */
-export namespace $${item.uuid.substring(0, 6)} {\n`;
+export namespace ${id} {\n`;
 
         if (item.properties.requestPath.length) {
             interfaceText += `   export interface Parameter {\n`;
             for (let [i, col] of Object.entries(item.properties.requestPath)) {
-                interfaceText += `      ${col.name}${col.required ? '' : '?'}: ${col.type};\n`;
+                interfaceText += `      ${col.name}${col.required ? "" : "?"}: ${col.type};\n`;
             }
             interfaceText += `   }\n\n`;
         }
@@ -105,7 +114,7 @@ export namespace $${item.uuid.substring(0, 6)} {\n`;
         if (item.properties.requestBody.length) {
             interfaceText += `   export interface Request {\n`;
             for (let [i, col] of Object.entries(item.properties.requestBody)) {
-                interfaceText += `      ${col.name}${col.required ? '?' : ''}: ${col.type};\n`;
+                interfaceText += `      ${col.name}${col.required ? "?" : ""}: ${col.type};\n`;
             }
             interfaceText += `   }\n`;
         }
@@ -127,30 +136,34 @@ let communicationServiceText = "";
 let communicationImportText = "";
 
 for (let item of paths) {
-    const id = item.uuid.substring(0, 6);
+    const id = GenerateID(item.method, item.path, item.uuid); 
 
     communicationServiceText += `
    /** ${item.desc} */
-   public ${item.method}$${id} (${item.properties.requestPath.length ? `parameter: $${id}.Parameter` : ""}${item.properties.requestPath.length && item.properties.requestBody.length ? ", " : ""}${item.properties.requestBody.length ? `request: $${id}.Request` : ""}): Promise<${item.properties.responses !== undefined ? `$${id}.Response` : "void"}>
+   public ${item.method}${id} (${item.properties.requestPath.length ? `parameter: ${id}.Parameter` : ""}${item.properties.requestPath.length && item.properties.requestBody.length ? ", " : ""}${item.properties.requestBody.length ? `request: ${id}.Request` : ""}): Promise<${item.properties.responses !== undefined ? `$${id}.Response` : "void"}>
    {
-      return this.apiCommand("${item.method.toUpperCase()}", $${id}.Url(${item.properties.requestPath.length ? "parameter" : ""}), ${item.properties.requestBody.length ? "request" : "{}"});
+      return this.apiCommand("${item.method.toUpperCase()}", ${id}.Url(${item.properties.requestPath.length ? "parameter" : ""}), ${item.properties.requestBody.length ? "request" : "{}"});
    }
     `;
 
     if (communicationImportText.length !== 0) communicationImportText += ",\n";
-    communicationImportText += `    $${id}`;
+    communicationImportText += `    ${id}`;
+    
+    console.log(`   generate interface ${id}`);
 }
 
 try {
-    var data = fs.readFileSync(__dirname + "/../templates/baseCommunication.service.template.ts", 'utf8');
+    var data = fs.readFileSync(__dirname + "/../templates/baseCommunication.service.template.ts", "utf8");
     fs.writeFileSync(config.output + "/communication.interface.ts", interfaceText);
 
     data = data.replace("[[ENDPOINTS]]", communicationServiceText);
     data = data.replace("[[IMPORTS]]", "import {\n" + communicationImportText + `\n} from "./communication.interface";`);
 
     fs.writeFileSync(config.output + "/baseCommunication.service.ts", data);
+
+    console.log(`   ${paths.length} interfaces generated`);
 } catch(e) {
-    console.log('Error:', e.stack);
+    console.log("Error:", e.stack);
 }
 
 //console.log(interfaceText, communicationServiceText);
