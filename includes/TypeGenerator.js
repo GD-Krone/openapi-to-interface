@@ -59,7 +59,7 @@ class TypeGenerator {
         let text = ``;
 
         for (const [typeName, type] of Object.entries(this.Types)) {
-            text += `   interface ${typeName} {\n`;
+            text += `   export interface ${typeName} {\n`;
 
             for (const [propName, propType] of Object.entries(type.properties)) {
                 text += `      ${propName}: ${propType}${this.IsArray(propType) ? "[]" : ""};\n`;
