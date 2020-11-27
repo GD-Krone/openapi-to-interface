@@ -8,7 +8,7 @@ export class BaseCommunicationService
   private async apiCommand<Response> (verb: "POST" | "GET", commandStr: string, payload: object): Promise<Response>
   {
     return new Promise(function(resolve, reject) {
-      command('open_api', JSON.stringify({verb, command: commandStr, "json": JSON.stringify(payload)}), resolve, reject);
+      command('open_api', JSON.stringify({verb, command: commandStr, "json": JSON.stringify(payload)}), (response) => resolve(JSON.parse(response)), reject);
     });
   }
   [[ENDPOINTS]]
