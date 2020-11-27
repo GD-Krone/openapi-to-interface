@@ -16,7 +16,7 @@ class TypeGenerator {
 
     Valid ()
     {
-        return Object.keys(this.Properties).length === 0;
+        return Object.keys(this.Properties).length !== 0;
     }
 
     BuildType (name, obj)

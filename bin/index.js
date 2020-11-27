@@ -80,7 +80,6 @@ function MakePath (path, getPost, method)
         endpoint.properties = obj;
         endpoint.uuid = getPost["x-uuid"];
     }  
-    
     return endpoint;
 }
 
@@ -125,8 +124,8 @@ export namespace ${id} {\n`;
       return \`${item.path.replace(/{/g, "${parameter.")}\`;
    }\n\n`;
 
-    if (item.properties.responses !== undefined) {
-        interfaceText += item.properties.responses.Definition();
+    if (item.responses !== undefined) {
+        interfaceText += item.responses.Definition();
     }
 
     interfaceText += "}\n";
