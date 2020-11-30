@@ -152,17 +152,24 @@ for (let item of paths) {
 }
 
 try {
-    var data = fs.readFileSync(__dirname + "/../templates/baseCommunication.service.template.ts", "utf8");
-    fs.writeFileSync(config.output + "/communication.interface.ts", interfaceText);
+   {
+      let data = fs.readFileSync(__dirname + "/../templates/communication.interface.template.ts", "utf8");
+      data = data.replace("[[INTERFACES]]", interfaceText);
 
-    data = data.replace("[[ENDPOINTS]]", communicationServiceText);
-    data = data.replace("[[IMPORTS]]", "import {\n" + communicationImportText + `\n} from "./communication.interface";`);
+      fs.writeFileSync(config.output + "/communication.interface.ts", data);
+   }
 
-    fs.writeFileSync(config.output + "/baseCommunication.service.ts", data);
+   {
+      let data = fs.readFileSync(__dirname + "/../templates/baseCommunication.service.template.ts", "utf8");
+      data = data.replace("[[ENDPOINTS]]", communicationServiceText);
+      data = data.replace("[[IMPORTS]]", "import {\n" + communicationImportText + `\n} from "./communication.interface";`);
 
-    console.log(`   ${paths.length} interfaces generated`);
+      fs.writeFileSync(config.output + "/baseCommunication.service.ts", data);
+   }
+   
+   console.log(`   ${paths.length} interfaces generated`);
 } catch(e) {
-    console.log("Error:", e.stack);
+   console.log("Error:", e.stack);
 }
 
 //console.log(interfaceText, communicationServiceText);
